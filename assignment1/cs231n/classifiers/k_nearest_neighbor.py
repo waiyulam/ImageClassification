@@ -99,6 +99,12 @@ class KNearestNeighbor(object):
             # Do not use np.linalg.norm().                                        #
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+            # a = np.array([[1,2,3],[5,6,7]])
+            # b = np.array([[1,2,3],[5,6,7],[8,7,9]])
+            # dist = np.zeros((3,2))
+            # for i in range(3):
+            #     dist[i,:] =  np.sqrt(np.sum(np.square(a - b[i]),axis = 1))# Compute sum of each row;
+            
             dists[i,:] =  np.sqrt(np.sum(np.square(self.X_train - X[i]),axis = 1))# Compute sum of each row;
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -125,11 +131,20 @@ class KNearestNeighbor(object):
         # nor use np.linalg.norm().                                             #
         #                                                                       #
         # HINT: Try to formulate the l2 distance using matrix multiplication    #
-        #       and two broadcast sums.                                         #
+        #       and two broadcast sums.
+        # https://medium.com/dataholiks-distillery/l2-distance-matrix-vectorization-trick-26aa3247ac6c
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        # For each vector x and y, the l2 distance between them can be expressed as (x-y)^2 = x^2 + y^2 - 2xy
+        # The first two terms are easy — just take the l2 norm of every row in the matrices X and X_train. The last term can be 
+        # expressed as a matrix multiply between X and transpose(X_train). Numpy can do all of these things super efficiently.
 
-        pass
+        # [:, np.newaxis] column wise addition now 
+        # a = np.array([[1,2,3]])
+        # b = np.array([[1],[5],[8]])
+        # print(a+b)
+
+        dists = np.sqrt(-2 * np.dot(X, self.X_train.T) + np.sum(self.X_train**2,axis=1) + np.sum(X**2, axis=1)[:,np.newaxis] )
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
