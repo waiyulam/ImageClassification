@@ -28,7 +28,6 @@ def svm_loss_naive(W, X, y, reg):
     num_classes = W.shape[1]
     num_train = X.shape[0]
     loss = 0.0
-    new_loss = np.zeros(W.shape)
        
     
     for i in range(num_train):
@@ -77,6 +76,8 @@ def svm_loss_vectorized(W, X, y, reg):
     """
     loss = 0.0
     dW = np.zeros(W.shape) # initialize the gradient as zero
+    num_classes = W.shape[1]
+    num_train = X.shape[0]
 
     #############################################################################
     # TODO:                                                                     #
@@ -84,8 +85,26 @@ def svm_loss_vectorized(W, X, y, reg):
     # result in loss.                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    
+    # Vectorized Implementation Tutorial : https://twice22.github.io/hingeloss/
+    # Forward pass : derive a formula to compute the loss using a vectorized implementation
+    scores = X.dot(W) # yield scores.shape = N * C 
+    correct_class_score = scores[np.arange(num_train),y] # yield [N,] 
+   
+    # Use boardcasting to compute the margin 
+    # Boardcasting : https://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
+    # The newaxis index operator inserts a new axis into array, making it a one more-dimensional
+    # The result arithmatic operation would be addition boardcasting 
+    margin = np.maximum(0,scores-correct_class_score[:,np.newaxis] + 1) # shape yield N * C
+    margin[np.arange(num_train), y] = 0 # we want the correct class has loss 0 not 1 
+    loss = np.sum(margin) # summing all the elements in margin 
+    
+    # Right now the loss is a sum over all training examples, but we want it
+    # to be an average instead so we divide by num_train.
+    loss /= num_train
+    # Add regularization to the loss.
+    loss += reg * np.sum(W * W)
+      
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -99,8 +118,24 @@ def svm_loss_vectorized(W, X, y, reg):
     # loss.                                                                     #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    # Backward pass 
+    # We want to build a matrix that has the same size as the margin matrix and that has 1 when the quantity of each cell of the margin matrix is positive and a zero otherwise
+    # We want to build a matrix that has on each cell of its j=yi column the negative sum of the indicator function of all the columns (except column yi) of margin matrix
+    # We need to multiply this newly created matrix by X (because we see xij is present in each cell of ∇wjLi)
+    mask = np.zeros(margin.shape)
+    mask[margin>0] = 1
+    
+    # We need to put in each row of this yith column the negative value of the sum of all the values in the other rows
+    sum_rows = np.sum(mask,axis = 1)
+    
+    # replace the yith column vector of the mask matrix by this newly created vector 
+    mask[np.arange(num_train),y] = - sum_rows 
+    
+    # finally we need to multiply by X so the final matrix has the same dimension as the W matrix: (D,C). We know mask’s dimension is (N,C) and X’s dimension is (N, D) so we need to return X⊺W:
+    dW = X.T.dot(mask)
+    dW = dW / num_train
+    dW += reg*W
+       
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
