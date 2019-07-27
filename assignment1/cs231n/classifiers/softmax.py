@@ -33,10 +33,33 @@ def softmax_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_class = W.shape[1]
+    num_train = X.shape[0]
+    
+    # http://cs231n.github.io/neural-networks-case-study/
+    # https://deepnotes.io/softmax-crossentropy
+    for i in range(num_train):
+        scores = np.dot(X[i],W) # scores.shape = [10,]
+        # max trick to avoid huge number arithmetic computation problem 
+        scores = scores - np.max(scores)
+        # log ( np.exp(correct_class_scores) / np.sum(np.exp(scores))) 
+        # log (np.exp(correct_class_scores)) - log ( np.sum(np.exp(scores)))
+        # loss_i = - (correct_class_scores - log ( np.sum(np.exp(scores))) )
+        loss = loss + np.log(np.sum(np.exp(scores))) - scores[y[i]]  
+        dW[:,y[i]] -= X[i]
+        for j in range(num_class):
+            dW [:,j] += np.exp(scores[j])/np.sum(np.exp(scores)) * X[i]
+            
+    # Right now the loss is a sum over all training examples, but we want it
+    # to be an average instead so we divide by num_train.
+    # loss = data loss + 1/2 * reg loss 
+    loss = loss/num_train + 0.5 * reg * np.sum(W * W)
+    dW = dW / num_train + reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+
+    
     return loss, dW
 
 
@@ -57,8 +80,22 @@ def softmax_loss_vectorized(W, X, y, reg):
     # regularization!                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    num_class = W.shape[1]
+    num_train = X.shape[0]
+    scores = X.dot(W) # yield scores.shape = N * C 
+    max_scores = np.max(scores,axis = 1)
+    scores = scores - max_scores[:,np.newaxis]
+    sum_scores = np.sum(np.exp(scores),axis = 1)
+    # error : scores[:,y]) != scores[np.arange(num_train),y]) 
+    # scores[:,y] has shape 500 * 500 
+    loss = np.sum (np.log(sum_scores) - scores[np.arange(num_train),y])    
+    mask = np.exp(scores) / sum_scores[:,np.newaxis]
+    mask[np.arange(num_train),y] -= 1
+    dW = X.T.dot(mask)
+    
+    loss = loss/num_train + 0.5 * reg * np.sum(W * W)
+    dW = dW / num_train + reg * W
+     
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 

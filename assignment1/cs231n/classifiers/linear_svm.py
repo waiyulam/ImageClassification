@@ -39,6 +39,7 @@ def svm_loss_naive(W, X, y, reg):
             margin = scores[j] - correct_class_score + 1 # note delta = 1
             if margin > 0:
                 loss += margin
+                
 #http://cs231n.github.io/optimization-1/ : compute the gradient analytically by calculus                  
                 dW[:,j] += X[i]
                 dW[:,y[i]] -= X[i]
