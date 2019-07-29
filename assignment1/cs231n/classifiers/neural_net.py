@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from past.builtins import xrange
 
+# scratch : https://ljvmiranda921.github.io/notebook/2017/02/17/artificial-neural-networks/
+
 class TwoLayerNet(object):
     """
     A two-layer fully-connected neural network. The net has an input dimension of
@@ -79,9 +81,24 @@ class TwoLayerNet(object):
         # shape (N, C).                                                             #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        # X : inputs; has shape (N,D)
+        # Y : outputs; has shape (N,C)
+        # W1: First layer weights; has shape (D, H)
+        # b1: First layer biases; has shape (H,)
+        # W2: Second layer weights; has shape (H, C)
+        # b2: Second layer biases; has shape (C,)
 
-        pass
-
+        
+        # first layer pre-activation 
+        z1 = X.dot(W1) + b1 # z1 has shape (N,H)
+        
+        # first layer activation  ( ReLu )
+        a1 = np.maximum(0,z1)
+        
+        # second layer pre-activation 
+        z2 = a1.dot(W2)+ b2 # z2 has shape (N,C)
+        scores = z2 
+       
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         # If the targets are not given then jump out, we're done
@@ -97,9 +114,19 @@ class TwoLayerNet(object):
         # classifier loss.                                                          #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
-
+        # second layers activation ( Softmax ) 
+        # maximum shift before exp to avoid huge number arithmatix mistakes 
+        shift_z2 = z2 - np.max(z2, axis = 1)[:,np.newaxis] 
+        z2 = shift_z2 
+        exp_z2 = np.exp(z2)  
+        a2 = exp_z2 / np.sum(exp_z2,axis=1)[:,np.newaxis]
+        
+        # softmax loss 
+        correct_logprobs = -np.log(a2[range(N), list(y)])
+        data_loss = np.sum(correct_logprobs)/N
+        reg_loss = 0.5 * reg * np.sum(W1 * W1) + 0.5 * reg * np.sum(W2 * W2)
+        loss = data_loss + reg_loss
+         
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         # Backward pass: compute gradients
@@ -110,9 +137,24 @@ class TwoLayerNet(object):
         # grads['W1'] should store the gradient on W1, and be a matrix of same size #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        # Network gets a feel of the contributions of each individual units, and adjusts itself accordingly so that the weights and biases are optimal
+        
+        # loss and a2
+        dscores = a2.copy()
+        dscores[range(N),list(y)] -= 1
+        dscores /= N
+        
+        # b2 and W2
+        grads['W2'] = a1.T.dot(dscores) + reg * W2
+        grads['b2'] = np.sum(dscores, axis = 0)
+        
+        # Propagate to hidden layer, Backprop the ReLU non-linearity
+        dhidden = (a1 > 0) * dscores.dot(W2.T) 
 
-        pass
-
+        # b2 and W2
+        grads['W1']  = X.T.dot(dhidden) + reg * W1
+        grads['b1'] = np.sum(dhidden, axis = 0)
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         return loss, grads
@@ -155,9 +197,10 @@ class TwoLayerNet(object):
             # them in X_batch and y_batch respectively.                             #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
-
+            sample_indices = np.random.choice(np.arange(num_train), batch_size)
+            X_batch = X[sample_indices]
+            y_batch = y[sample_indices]
+            
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             # Compute loss and gradients using the current minibatch
@@ -171,8 +214,11 @@ class TwoLayerNet(object):
             # stored in the grads dictionary defined above.                         #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
+            self.params['W1'] -=  learning_rate * grads['W1']
+            self.params['W2'] -=  learning_rate * grads['W2']
+            self.params['b1'] -=  learning_rate * grads['b1']
+            self.params['b2'] -=  learning_rate * grads['b2']
+           
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -217,8 +263,11 @@ class TwoLayerNet(object):
         # TODO: Implement this function; it should be VERY simple!                #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        z1 = X.dot(self.params['W1']) + self.params['b1']
+        a1 = np.maximum(0, z1) # pass through ReLU activation function
+        scores = a1.dot(self.params['W2']) + self.params['b2']
+        y_pred = np.argmax(scores, axis=1)
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
