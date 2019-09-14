@@ -40,7 +40,7 @@ def svm_loss_naive(W, X, y, reg):
             if margin > 0:
                 loss += margin
                 
-#http://cs231n.github.io/optimization-1/ : compute the gradient analytically by calculus                  
+    #http://cs231n.github.io/optimization-1/ : compute the gradient analytically by calculus                  
                 dW[:,j] += X[i]
                 dW[:,y[i]] -= X[i]
 

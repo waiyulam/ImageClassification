@@ -67,8 +67,14 @@ def sgd_momentum(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    #     Nesterov
+    #     v_prev = v 
+    #     v = config['momentum']*v - config['learning_rate']*dw
+    #     next_w = w - config['momentum'] * v_prev + (1 + config['momentum']) * v
 
+    # Normal momentum update 
+    v = config['momentum']*v - config['learning_rate']*dw
+    next_w = w + v
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -105,7 +111,8 @@ def rmsprop(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    config['cache'] = config['decay_rate'] * config['cache'] + (1 - config['decay_rate']) * dw**2
+    next_w = w - config['learning_rate'] * dw / (np.sqrt(config['cache']) + config['epsilon'])
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -148,8 +155,17 @@ def adam(w, dw, config=None):
     # using it in any calculations.                                           #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    config['t'] += 1
+    #first_moment : adding momentum
+    config['m'] = config['beta1']*config['m'] + (1-config['beta1'])*dw
+    #first unbias term
+    mt = config['m'] / (1-config['beta1']**config['t'])  
+    
+    #second moment : RAMsprop
+    config['v'] = config['beta2']*config['v'] + (1-config['beta2'])*(dw**2)
+    #second unbias term
+    vt = config['v'] / (1-config['beta2']**config['t'])
+    next_w = w - config['learning_rate'] * mt / (np.sqrt(vt) + config['epsilon'])
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

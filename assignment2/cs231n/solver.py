@@ -161,6 +161,7 @@ class Solver(object):
         self.val_acc_history = []
 
         # Make a deep copy of the optim_config for each parameter
+        # config: A dictionary containing hyperparameter values such as learning rate, momentum, etc. If the update rule requires caching values over many iterations, then config will also hold these cached values
         self.optim_configs = {}
         for p in self.model.params:
             d = {k: v for k, v in self.optim_config.items()}
@@ -183,6 +184,7 @@ class Solver(object):
         self.loss_history.append(loss)
 
         # Perform a parameter update
+        # p is the key and w is the key value 
         for p, w in self.model.params.items():
             dw = grads[p]
             config = self.optim_configs[p]
