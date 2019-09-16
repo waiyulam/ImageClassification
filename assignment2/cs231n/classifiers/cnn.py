@@ -54,8 +54,14 @@ class ThreeLayerConvNet(object):
         # the start of the loss() function to see how that happens.                #                           
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        C, H, W = input_dim
+        self.params['W1'] = weight_scale * np.random.randn(num_filters,C,filter_size,filter_size)
+        self.params['b1'] = np.zeros(num_filters)
+        input_dim = int(num_filters * (H/2) * (W/2))
+        self.params['W2'] = weight_scale * np.random.randn(input_dim,hidden_dim)
+        self.params['b2'] = np.zeros(hidden_dim)
+        self.params['W3'] = weight_scale * np.random.randn(hidden_dim,num_classes)
+        self.params['b3'] = np.zeros(num_classes)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -68,8 +74,12 @@ class ThreeLayerConvNet(object):
 
     def loss(self, X, y=None):
         """
-        Evaluate loss and gradient for the three-layer convolutional network.
+        A three-layer convolutional network with the following architecture:
 
+        conv - relu - 2x2 max pool - affine - relu - affine - softmax
+        
+        Evaluate loss and gradient for the three-layer convolutional network.
+     
         Input / output: Same API as TwoLayerNet in fc_net.py.
         """
         W1, b1 = self.params['W1'], self.params['b1']
@@ -94,9 +104,16 @@ class ThreeLayerConvNet(object):
         # cs231n/layer_utils.py in your implementation (already imported).         #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
-
+        
+        # conv - relu - 2x2 max pool
+        crp_out,crp_cache = conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        
+        # affine - relu 
+        ar_out,ar_cache = affine_relu_forward(crp_out,W2,b2) 
+        
+        # affine - softmax 
+        scores,as_cache = affine_forward(ar_out,W3,b3)
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -117,8 +134,27 @@ class ThreeLayerConvNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        
+        # compute softmax loss 
+        data_loss,dscores = softmax_loss(scores,y)
+        reg_loss = 0.5 * self.reg * np.sum(W1 * W1) + 0.5 * self.reg * np.sum(W2 * W2) + 0.5 * self.reg * np.sum(W3*W3)
+        loss = data_loss + reg_loss 
+        
+        # gradients for W3 and b3
+        dout3, dw3, db3 = affine_backward(dscores, as_cache)
+        grads['W3'] = dw3 + self.reg * W3
+        grads['b3'] = db3
 
-        pass
+        # gradients for W2 and b2 
+        dout2,dw2,db2 = affine_relu_backward(dout3,ar_cache)
+        grads['W2'] = dw2 + self.reg * W2
+        grads['b2'] = db2
+        
+        # gradients for W1 and b1 
+        _,dw1,db1 = conv_relu_pool_backward(dout2,crp_cache)
+        grads['W1'] = dw1 + self.reg * W1
+        grads['b1'] = db1
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
