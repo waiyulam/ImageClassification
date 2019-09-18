@@ -151,7 +151,6 @@ class CaptioningRNN(object):
         # (3)
         if self.cell_type == 'rnn':
             hidden_rnn, cache_rnn = rnn_forward(captions_in_init, hidden_init, Wx, Wh, b)
-
         else:
             hidden_rnn, cache_rnn = lstm_forward(captions_in_init, hidden_init, Wx, Wh, b)
 
